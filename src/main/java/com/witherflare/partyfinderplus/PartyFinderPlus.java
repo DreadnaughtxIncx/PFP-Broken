@@ -133,8 +133,10 @@ public class PartyFinderPlus {
                     System.out.println(e.getMessage());
                     if (!sentFeedback) {chat(PREFIX + " §cAn error occured while grabbing the profile data of §e" + user + "§c. Make sure your API key is valid and try again.");sentFeedback = true;}
                 }
+
+                String currentprofileId;
+
                 try {
-                    String currentprofileId;
                     profiles.forEach(profileData -> {
                         if (profileData.getAsJsonObject().get("members").getAsJsonObject().get(uuid).getAsJsonObject().get("selected").getAsBoolean()) {
                             currentprofileId = profileData.getAsJsonObject().get("profile_id").getAsString();
@@ -195,7 +197,7 @@ public class PartyFinderPlus {
                     } else {
                         // The user made it past the first checks, hooray!
                         HttpResponse res3 = null;
-                        res3 = client.execute(new HttpGet("https://api.hypixel.net/skyblock/profile?key=" + config.apiKey + "&uuid=" + uuid + "&profile=" + currentProfileId));
+                        res3 = client.execute(new HttpGet("https://api.hypixel.net/skyblock/profile?key=" + config.apiKey + "&uuid=" + uuid + "&profile=" + currentprofileId));
                         String body3 = null;
                         body3 = EntityUtils.toString(res3.getEntity());
                         JsonObject inventoryData = parser.parse(body3).getAsJsonObject();
