@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.witherflare.partyfinderplus.commands.PartyFinderPlusCommand;
 import com.witherflare.partyfinderplus.config.Config;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ChatComponentText;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Mod(
     modid = PartyFinderPlus.MOD_ID,
@@ -134,14 +136,15 @@ public class PartyFinderPlus {
                     if (!sentFeedback) {chat(PREFIX + " §cAn error occured while grabbing the profile data of §e" + user + "§c. Make sure your API key is valid and try again.");sentFeedback = true;}
                 }
 
-                String currentprofileId;
+                String currentProfileId = null;
 
                 try {
-                    profiles.forEach(profileData -> {
-                        if (profileData.getAsJsonObject().get("members").getAsJsonObject().get(uuid).getAsJsonObject().get("selected").getAsBoolean()) {
-                            currentprofileId = profileData.getAsJsonObject().get("profile_id").getAsString();
+                    for (JsonElement profile : profiles) {
+                        if (profile.getAsJsonObject().get("members").getAsJsonObject().get(uuid).getAsJsonObject().get("selected").getAsBoolean()) {
+                            currentProfileId = profile.getAsJsonObject().get("profile_id").getAsString();
                         }
-                    });
+                    }
+
 
                     HttpResponse res2 = null;
                     res2 = client.execute(new HttpGet("https://api.hypixel.net/player?key=" + config.apiKey + "&uuid=" + uuid));
@@ -197,7 +200,7 @@ public class PartyFinderPlus {
                     } else {
                         // The user made it past the first checks, hooray!
                         HttpResponse res3 = null;
-                        res3 = client.execute(new HttpGet("https://api.hypixel.net/skyblock/profile?key=" + config.apiKey + "&uuid=" + uuid + "&profile=" + currentprofileId));
+                        res3 = client.execute(new HttpGet("https://api.hypixel.net/skyblock/profile?key=" + config.apiKey + "&uuid=" + uuid + "&profile=" + currentProfileId));
                         String body3 = null;
                         body3 = EntityUtils.toString(res3.getEntity());
                         JsonObject inventoryData = parser.parse(body3).getAsJsonObject();
@@ -218,7 +221,7 @@ public class PartyFinderPlus {
 
                         byte[] bytearray = Base64.getDecoder().decode(invContents);
                         ByteArrayInputStream inputstream = new ByteArrayInputStream(bytearray);
-                        NBTTagCompound nbt = net.minecraft.nbt.CompressedStreamTools.readCompressed(inputstream);
+                        NBTTagCompound nbt = CompressedStreamTools.readCompressed(inputstream);
                         NBTTagList itemTagList = nbt.getTagList("i", 10);
                         String invItems = itemTagList.toString();
 
